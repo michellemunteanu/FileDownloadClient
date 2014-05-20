@@ -29,7 +29,7 @@ int main(int argc, char **argv)
     }
 
     sa.sin_family = AF_INET; //creates an internet socket
-    sa.sin_port = htons(1234); //assigns 80 as port num
+    sa.sin_port = htons(1234); //assigns 1234 as port num
     inet_pton(AF_INET, argv[1], &sa.sin_addr);
     
     //create the socket and assigns it a num (int sockfd):
@@ -75,10 +75,28 @@ int main(int argc, char **argv)
             case 'l': //a list of available files is shown
 	    sprintf(buf, "LIST\n");
 	    send(sockfd, buf, strlen(buf), 0);
-	    while ((size = recv(sockfd, buf, 1000, 0)) > 0)
+	    int bufcount=0;
+	    do 
+	    {
+		size = recv(sockfd,buf,1000,0);
+		printf("Got buffer %d of size %zu\n",bufcount,size);
+                bufcount++;
+		fwrite(buf, size, 1, stdout);
+	    } while(buf[size-3] != '\n' && buf[size-2] != '.' && buf[size-1] == '\n');
+	    /*while ((size = recv(sockfd, buf, 1000, 0)) > 0)
     	    {
         	fwrite(buf, size, 1, stdout);
-    	    }
+    	    }*/
+	    printf("sending QUIT\n");
+	    sprintf(buf, "QUIT\n");
+            send(sockfd, buf, strlen(buf),0);
+            size = recv(sockfd,buf,1000,0);
+            if(size > 0 && buf[0] != '+')
+            {
+                fprintf(stderr, "Did not receive +OK from quit\n");
+                exit(5);
+            }
+            close(sockfd);
 	    break;
 
 	    case 'D':
@@ -88,16 +106,16 @@ int main(int argc, char **argv)
 
 	    case 'Q':
             case 'q': //quit
-	    sprintf(buf, "QUIT\n");
+/*	    sprintf(buf, "QUIT\n");
 	    send(sockfd, buf, strlen(buf),0);
 	    size = recv(sockfd,buf,1000,0);
 	    if(size > 0 && buf[0] != '+')
 	    {
 		fprintf(stderr, "Did not receive +OK from quit\n");
 		exit(5);
-	    }
-	    close(sockfd);	
-	    //exit(5);
+	    } */
+	    close(sockfd); 	
+	    exit(5);
 		break;
 
 	     default:
