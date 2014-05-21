@@ -20,6 +20,11 @@ int main(int argc, char **argv)
 {
     struct sockaddr_in sa; //struct that holds info about the socket
     int sockfd;
+    FILE *d; //the file pointer for writing to a file (downloading)
+    char *fname;
+    int filesize;
+    int rsize=0; //received size to keep track of how much has been received
+    //char fname[40]; //this is the array that holds the filename to download
 
     if (argc < 3)
     {
@@ -51,12 +56,7 @@ int main(int argc, char **argv)
 	fprintf(stderr, "Didn't receive +OK from initial message\n");
 	exit(5);
     }
-   /* sprintf(buf, "GET %s HTTP/1.0\n", argv[2]);
-    send(sockfd, buf, strlen(buf), 0);
-    sprintf(buf, "Host: %s\n", argv[1]);
-    send(sockfd, buf, strlen(buf), 0);
-    sprintf(buf, "\n");
-    send(sockfd, buf, strlen(buf), 0);
+   /*
     
     while ((size = recv(sockfd, buf, 1000, 0)) > 0)
     {
@@ -76,17 +76,14 @@ int main(int argc, char **argv)
 	    sprintf(buf, "LIST\n");
 	    send(sockfd, buf, strlen(buf), 0);
 	    int bufcount=0;
-	    do 
+	    do //will need to fix this later to skip over +OK and .
 	    {
 		size = recv(sockfd,buf,1000,0);
 		printf("Got buffer %d of size %zu\n",bufcount,size);
                 bufcount++;
 		fwrite(buf, size, 1, stdout);
 	    } while(buf[size-3] != '\n' && buf[size-2] != '.' && buf[size-1] == '\n');
-	    /*while ((size = recv(sockfd, buf, 1000, 0)) > 0)
-    	    {
-        	fwrite(buf, size, 1, stdout);
-    	    }*/
+
 	    printf("sending QUIT\n");
 	    sprintf(buf, "QUIT\n");
             send(sockfd, buf, strlen(buf),0);
@@ -101,7 +98,34 @@ int main(int argc, char **argv)
 
 	    case 'D':
             case 'd': //prompt for file to download, download that file, save it to user's folder
+	    fname = readline("File to download: ");
+	    d = fopen(fname, "w");
+            bufcount=0;
+	    sprintf(buf, "SIZE %s\n", fname);
+            send(sockfd, buf, strlen(buf), 0);
+            size = recv(sockfd,buf,1000,0);
+	    sscanf(buf, "%d", &filesize); //get total file size of file to be downloaded
+	    sprintf(buf, "GET %s\n",fname);
+            send(sockfd, buf, strlen(buf), 0);
+            do
+            {
+                size = recv(sockfd,buf,1000,0);
+                //printf("Got buffer %d of size %zu\n",bufcount,size);
+                //bufcount++;
+                fwrite(buf, size, 1, d);
+		rsize+=size;
+            } while(rsize <= filesize);
 
+            printf("sending QUIT\n");
+            sprintf(buf, "QUIT\n");
+            send(sockfd, buf, strlen(buf),0);
+            size = recv(sockfd,buf,1000,0);
+            if(size > 0 && buf[0] != '+')
+            {
+                fprintf(stderr, "Did not receive +OK from quit\n");
+                exit(5);
+            }
+            close(sockfd);     
 	    break;;
 
 	    case 'Q':
