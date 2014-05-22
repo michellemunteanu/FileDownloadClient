@@ -23,7 +23,7 @@ int main(int argc, char **argv)
     FILE *d; //the file pointer for writing to a file (downloading)
     char *fname;
     int filesize;
-    int rsize=0; //received size to keep track of how much has been received
+    int rsize; //received size to keep track of how much has been received
     //char fname[40]; //this is the array that holds the filename to download
 
     if (argc < 3)
@@ -101,20 +101,51 @@ int main(int argc, char **argv)
 	    fname = readline("File to download: ");
 	    d = fopen(fname, "w");
             bufcount=0;
+	    rsize=0;
+	    filesize=0;
+
+	    printf("Downloading %s\n", fname);
+
 	    sprintf(buf, "SIZE %s\n", fname);
             send(sockfd, buf, strlen(buf), 0);
-            size = recv(sockfd,buf,1000,0);
+            size = recv(sockfd,buf,1000,0); //recv to get +OK and size
+	    if(size > 0 && buf[0] != '+')
+            {
+                fprintf(stderr, "Did not receive +OK from size\n");
+                exit(6);
+            }
+
+	     for(int i=0;i<size;i++)
+             {
+                 fprintf(d,"%c",buf[i]);
+                 //printf("%c",buf[i]);
+             }
+                
 	    sscanf(buf, "%d", &filesize); //get total file size of file to be downloaded
+	    printf("Filesize %d\n",filesize); //***why is this always zero?
+	    
 	    sprintf(buf, "GET %s\n",fname);
             send(sockfd, buf, strlen(buf), 0);
+            size = recv(sockfd,buf,1000,0);
+	    if(size > 0 && buf[0] != '+')
+            {
+                fprintf(stderr, "Did not receive +OK from get\n");
+                exit(7);
+            }
+
             do
             {
                 size = recv(sockfd,buf,1000,0);
                 //printf("Got buffer %d of size %zu\n",bufcount,size);
                 //bufcount++;
-                fwrite(buf, size, 1, d);
+                //fwrite(buf, size, 1, d);
+		for(int i=0;i<size;i++)
+		{
+		    //fprintf(d,"%c",buf[i]);
+		    printf("%c",buf[i]);
+		}
 		rsize+=size;
-            } while(rsize <= filesize);
+	    } while(rsize <= filesize);
 
             printf("sending QUIT\n");
             sprintf(buf, "QUIT\n");
