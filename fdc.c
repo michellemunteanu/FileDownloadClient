@@ -69,7 +69,7 @@ int main(int argc, char **argv)
 	    sprintf(buf, "LIST\n");
 	    send(sockfd, buf, strlen(buf), 0);
 	    int bufcount=0;
-	    do //will need to fix this later to skip over .
+	    do
 	    {
 		size = recv(sockfd,buf,1000,0);
 		//printf("Got buffer %d of size %zu\n",bufcount,size);
