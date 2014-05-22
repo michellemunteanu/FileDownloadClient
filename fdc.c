@@ -24,7 +24,6 @@ int main(int argc, char **argv)
     char *fname;
     int filesize;
     int rsize; //received size to keep track of how much has been received
-    //char fname[40]; //this is the array that holds the filename to download
 
     if (argc < 3)
     {
@@ -84,18 +83,6 @@ int main(int argc, char **argv)
 		fwrite(buf, size, 1, stdout);
 	    } while(buf[size-3] != '\n' && buf[size-2] != '.' && buf[size-1] == '\n');
 
-/*
-	    printf("sending QUIT\n");
-	    sprintf(buf, "QUIT\n");
-            send(sockfd, buf, strlen(buf),0);
-            size = recv(sockfd,buf,1000,0);
-            if(size > 0 && buf[0] != '+')
-            {
-                fprintf(stderr, "Did not receive +OK from quit\n");
-                exit(5);
-            }
-            close(sockfd);
-*/
 	    break;
 
 	    case 'D':
@@ -141,41 +128,30 @@ int main(int argc, char **argv)
             do
             {
                 size = recv(sockfd,buf,1000,0);
+		fwrite(buf, 1, size, d);
                 //printf("Got buffer %d of size %zu\n",bufcount,size);
                 //bufcount++;
                 //fwrite(buf, size, 1, d);
-		for(int i=0;i<size;i++)
+	/*	for(int i=0;i<size;i++)
 		{
 		    //fprintf(d,"%c",buf[i]);
 		    printf("%c",buf[i]);
-		}
+		}*/
 		rsize+=size;
 	    } while(rsize < filesize);
 
-/*
-            printf("sending QUIT\n");
-            sprintf(buf, "QUIT\n");
-            send(sockfd, buf, strlen(buf),0);
-            size = recv(sockfd,buf,1000,0);
-            if(size > 0 && buf[0] != '+')
-            {
-                fprintf(stderr, "Did not receive +OK from quit\n");
-                exit(5);
-            }
-            close(sockfd);     
-*/
 	    break;;
 
 	    case 'Q':
             case 'q': //quit
-/*	    sprintf(buf, "QUIT\n");
+	    sprintf(buf, "QUIT\n");
 	    send(sockfd, buf, strlen(buf),0);
 	    size = recv(sockfd,buf,1000,0);
 	    if(size > 0 && buf[0] != '+')
 	    {
 		fprintf(stderr, "Did not receive +OK from quit\n");
 		exit(5);
-	    } */
+	    } 
 	    close(sockfd); 	
 	    exit(5);
 		break;
