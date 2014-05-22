@@ -84,6 +84,7 @@ int main(int argc, char **argv)
 		fwrite(buf, size, 1, stdout);
 	    } while(buf[size-3] != '\n' && buf[size-2] != '.' && buf[size-1] == '\n');
 
+/*
 	    printf("sending QUIT\n");
 	    sprintf(buf, "QUIT\n");
             send(sockfd, buf, strlen(buf),0);
@@ -94,6 +95,7 @@ int main(int argc, char **argv)
                 exit(5);
             }
             close(sockfd);
+*/
 	    break;
 
 	    case 'D':
@@ -115,13 +117,16 @@ int main(int argc, char **argv)
                 exit(6);
             }
 
+		fwrite(buf, 1, size, stdout);
+/*
 	     for(int i=0;i<size;i++)
              {
-                 fprintf(d,"%c",buf[i]);
-                 //printf("%c",buf[i]);
+                 //fprintf(d,"%c",buf[i]);
+                 printf("%c",buf[i]);
              }
+*/
                 
-	    sscanf(buf, "%d", &filesize); //get total file size of file to be downloaded
+	    sscanf(buf, "%*s %d", &filesize); //get total file size of file to be downloaded
 	    printf("Filesize %d\n",filesize); //***why is this always zero?
 	    
 	    sprintf(buf, "GET %s\n",fname);
@@ -145,8 +150,9 @@ int main(int argc, char **argv)
 		    printf("%c",buf[i]);
 		}
 		rsize+=size;
-	    } while(rsize <= filesize);
+	    } while(rsize < filesize);
 
+/*
             printf("sending QUIT\n");
             sprintf(buf, "QUIT\n");
             send(sockfd, buf, strlen(buf),0);
@@ -157,6 +163,7 @@ int main(int argc, char **argv)
                 exit(5);
             }
             close(sockfd);     
+*/
 	    break;;
 
 	    case 'Q':
