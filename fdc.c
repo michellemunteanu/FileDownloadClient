@@ -55,13 +55,6 @@ int main(int argc, char **argv)
 	fprintf(stderr, "Didn't receive +OK from initial message\n");
 	exit(5);
     }
-   /*
-    
-    while ((size = recv(sockfd, buf, 1000, 0)) > 0)
-    {
-        fwrite(buf, size, 1, stdout);
-    }
-    */
   
     while(1)
     {
@@ -72,15 +65,28 @@ int main(int argc, char **argv)
         {
             case 'L':
             case 'l': //a list of available files is shown
+	    printf("\n");
 	    sprintf(buf, "LIST\n");
 	    send(sockfd, buf, strlen(buf), 0);
 	    int bufcount=0;
-	    do //will need to fix this later to skip over +OK and .
+	    do //will need to fix this later to skip over .
 	    {
 		size = recv(sockfd,buf,1000,0);
-		printf("Got buffer %d of size %zu\n",bufcount,size);
-                bufcount++;
-		fwrite(buf, size, 1, stdout);
+		//printf("Got buffer %d of size %zu\n",bufcount,size);
+                //bufcount++;
+	        if(buf[0] == '+')
+                {
+		    fwrite((buf+4), (size-4), 1, stdout);
+                }
+	        else if(buf[size-2] == '.')
+		{
+		   fwrite(buf, (size-2), 1, stdout); //don't print the '.'
+		    printf("\n");
+		}
+		else
+		{
+		    fwrite(buf, size, 1, stdout);
+		}
 	    } while(buf[size-3] != '\n' && buf[size-2] != '.' && buf[size-1] == '\n');
 
 	    break;
@@ -89,11 +95,11 @@ int main(int argc, char **argv)
             case 'd': //prompt for file to download, download that file, save it to user's folder
 	    fname = readline("File to download: ");
 	    d = fopen(fname, "w");
-            bufcount=0;
+            //bufcount=0;
 	    rsize=0;
 	    filesize=0;
 
-	    printf("Downloading %s\n", fname);
+	    printf("Downloading %s...\n", fname);
 
 	    sprintf(buf, "SIZE %s\n", fname);
             send(sockfd, buf, strlen(buf), 0);
@@ -104,17 +110,10 @@ int main(int argc, char **argv)
                 exit(6);
             }
 
-		fwrite(buf, 1, size, stdout);
-/*
-	     for(int i=0;i<size;i++)
-             {
-                 //fprintf(d,"%c",buf[i]);
-                 printf("%c",buf[i]);
-             }
-*/
+		//fwrite(buf, 1, size, stdout);
                 
 	    sscanf(buf, "%*s %d", &filesize); //get total file size of file to be downloaded
-	    printf("Filesize %d\n",filesize); //***why is this always zero?
+	    //printf("Filesize %d\n",filesize); //***why is this always zero?
 	    
 	    sprintf(buf, "GET %s\n",fname);
             send(sockfd, buf, strlen(buf), 0);
@@ -129,16 +128,10 @@ int main(int argc, char **argv)
             {
                 size = recv(sockfd,buf,1000,0);
 		fwrite(buf, 1, size, d);
-                //printf("Got buffer %d of size %zu\n",bufcount,size);
-                //bufcount++;
-                //fwrite(buf, size, 1, d);
-	/*	for(int i=0;i<size;i++)
-		{
-		    //fprintf(d,"%c",buf[i]);
-		    printf("%c",buf[i]);
-		}*/
 		rsize+=size;
 	    } while(rsize < filesize);
+
+	    printf("Download of %s complete.\n\n", fname);
 
 	    break;;
 
@@ -161,7 +154,4 @@ int main(int argc, char **argv)
                // Handle everything else
         }
     }
-
-
 }
-
